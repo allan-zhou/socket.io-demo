@@ -1,15 +1,14 @@
 var log4js = require('log4js');
 var logger = log4js.getLogger('server');
 logger.level = 'debug';
+var dateFormat = require('dateformat');
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server,{
     path:'/test'
 });
-var dateFormat = require('dateformat');
 var port = process.env.PORT || 3000;
-
 
 io.on('connection', (socket) => {
     socket.on('message', (data) => {

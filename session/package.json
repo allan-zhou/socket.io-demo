@@ -9,9 +9,10 @@
   "author": "zhoujl",
   "license": "ISC",
   "dependencies": {
+    "connect-redis": "^3.3.2",
     "dateformat": "^3.0.2",
     "express": "^4.16.2",
-    "log4js": "^2.3.5",
-    "socket.io": "^2.0.3"
+    "express-session": "^1.15.6",
+    "log4js": "^2.3.5"
   }
 }
