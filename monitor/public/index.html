@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>monitor</title>
+    <style>
+        .bar {
+            fill: deepskyblue;
+        }
+
+        .text {
+            fill: orange;
+            font-size: 12px;
+            font-family: 微软雅黑;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>monitor</h2>
+    <div id="chart"></div>
+    <!-- script -->
+    <script src="/js/d3.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- script socket.io client -->
+    <script type="text/javascript">
+        var socket = io('http://192.168.1.217:3000');
+        socket.on('connect', () => {
+            console.log('client connent');
+        })
+
+        socket.on('appdownload', (data) => {
+            buildBar(data, false);
+        })
+    </script>
+    <!-- script -->
+    <script>
+        // var dataset = [{
+        //     name: 'ios',
+        //     count: 60
+        // }, {
+        //     name: 'android',
+        //     count: 120
+        // }];
+
+        var api = "http://192.168.1.217:3000/api/appdownload";
+        fetch(api).then((response) => {
+            return response.json();
+        }).then((data) => {
+            buildBar(data, true);
+        }).catch((err) => {
+            console.log(err);
+        })
+
+        function buildBar(data, isInit) {
+            // console.log(data);
+            var svgHeight = 150;
+            var svgWidth = 300;
+            var rectWidth = 40;
+            var svgXPadding = 40;
+            var svgYPadding = 30;
+            var rectPadding = 3;
+
+            if (!isInit) d3.select('#chart').select('svg').remove();
+
+            var svg = d3.select('#chart')
+                .append('svg')
+                .attr('height', svgHeight)
+                .attr('width', svgWidth);
+
+            var xScale = d3.scaleLinear()
+                .domain([0, data.length])
+                .range([0, data.length * rectWidth + (data.length - 1) * rectPadding]);
+            var yScale = d3.scaleLinear()
+                .domain([0, 100])
+                .range([svgHeight - svgYPadding * 2, 0]);
+
+            var xAxis = d3.axisBottom(xScale).ticks(3);
+            var yAxis = d3.axisLeft(yScale).ticks(4);
+
+            console.log(svgHeight - svgYPadding * 2); //140
+            console.log(yScale(0)); //140
+
+            var rect = svg.selectAll('rect').data(data);
+            // rect.exit().remove();
+            rect.enter()
+                .append('rect')
+                .attr('x', (d, i) => { return i * (rectWidth + rectPadding) + svgXPadding })
+                .attr('y', (d, i) => { return svgHeight - svgYPadding - d.count })
+                .attr('height', (d) => { return d.count })
+                .attr('width', rectWidth)
+                .attr('class', 'bar');
+
+            var text = svg.selectAll('text').data(data);
+            // text.exit().remove();
+            text.enter()
+                .append('text')
+                .text((d) => { return d.count; })
+                .attr('x', (d, i) => { return i * rectWidth + i * rectPadding + svgXPadding })
+                .attr('y', (d, i) => { return svgHeight - d.count - svgYPadding - 2 })
+                .attr('class', 'text');
+
+            svg.append('g')
+                .attr("transform", `translate(${svgXPadding},${svgHeight - svgYPadding})`)
+                .call(xAxis);
+
+            svg.append('g')
+                .attr("transform", `translate(${svgXPadding},${svgYPadding})`)
+                .call(yAxis);
+        }
+    </script>
+</body>
+
+</html>
