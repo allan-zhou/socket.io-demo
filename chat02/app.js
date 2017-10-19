@@ -1,78 +1,44 @@
 var log4js = require('log4js');
-var logger = log4js.getLogger('server');
+var logger = log4js.getLogger('chat02-app.js');
 logger.level = 'debug';
-var dateFormat = require('dateformat');
+var fs = require('fs');
+var path = require('path');
 var express = require('express');
+var session = require('express-session');
+var RedisStore = require('connect-redis')(session);
 var app = express();
 var server = require('http').createServer(app);
-var io = require('socket.io')(server,{
-    path:'/test'
-});
+// var dateFormat = require('dateformat');
+// var redisAdapter = require('socket.io-redis');
+var chatServer = require('./src/chat.js')(server);//初始化 socket.io server
 var port = process.env.PORT || 3000;
 
-io.on('connection', (socket) => {
-    socket.on('message', (data) => {
-        logger.debug('server fire event:[message]-' + data);
-        // socket.to(socket.roomid).emit('message', {
-        //     username: socket.username,
-        //     message: data,
-        //     time: dateFormat(new Date(),'mm-dd HH:MM:ss')
-        // })
-        io.in(socket.roomid).emit('message', {
-            username: socket.username,
-            message: data,
-            time: dateFormat(new Date(),'mm-dd HH:MM:ss')
-        })
-    });
+//
+//============= http server config =================
+//
+app.use(session({
+    secret: 'secret',
+    store: new RedisStore({
+        host:'localhost',
+        port:6379,
+        db:1, //设置DB number
+    }),
+    name: 'SessionID',
+    cookie:{
+        maxAge:60000 //60秒
+    }
+}));
 
-    socket.on('broadcast',(data) => {
-        logger.debug('server fire event:[broadcast]-' + data);
-        socket.broadcast.emit('broadcast',{
-            username: socket.username,
-            message: data,
-            time: dateFormat(new Date(),'mm-dd HH:MM:ss')
-        })
-    })
+// app.use(express.static('public'));
 
-    socket.on('disconnect', () => {
-        logger.debug('server fire event:[disconnect]');
-
-        socket.to(socket.roomid).emit('leave',{
-            username: socket.username,
-            message:`${socket.username} 离开了 ${socket.roomid} 聊天`,
-            time: dateFormat(new Date(),'mm-dd HH:MM:ss')
-        });
-    });
-
-    // response the client join the chat
-    socket.on('join', (data) => {
-        logger.debug('server fire event:[join]');
-        
-        socket.username = data.username;
-        socket.roomid = data.roomid;
-
-        socket.join(data.roomid,() => {
-            logger.debug("=========socket=======");
-            logger.debug(socket);
-            logger.debug("socket.id : " + socket.id);
-            logger.debug("socket.rooms :" + socket.rooms);
-            logger.debug("socket.rooms.length: " + Object.keys(socket.rooms).length);
-            logger.debug("socket.adapter.rooms: " + Object.keys(socket.adapter.rooms).length);
-
-            socket.to(socket.roomid).emit('join', {
-                username: data.username,
-                message: `${data.username} 加入了 ${socket.roomid} 聊天`,
-                time: dateFormat(new Date(),'mm-dd HH:MM:ss')
-            });
-    
-        })
-    });
-})
-
-app.use(express.static('public'));
+app.get('/',(req, res) => {
+    logger.debug("req.sessionID");
+    logger.debug(req.sessionID);
+    fs.createReadStream(path.join(__dirname + '/public/index.html')).pipe(res);
+});
 
 server.listen(port, () => {
     logger.info(`server start at port: ${port}`);
-})
+});
 
 

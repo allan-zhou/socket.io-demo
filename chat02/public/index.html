@@ -59,8 +59,12 @@
     <p><input id="btnJoin" type="button" value="join"></p>
   </div>
 
+  <div id="temp">
+
+  </div>
+
   <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.js"></script>
-  <script src="/test/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script src="/dateformat.js"></script>
   <script>
     var USERNAME = '';
@@ -71,67 +75,17 @@
       $("#JoinContainer").show();
 
       // socket 初始化
-      var socket = io('http://192.168.1.217:3000',{
-        path:'/test'
+      var socket = io('http://192.168.1.217:3000');
+
+
+      socket.on('msgReceived',(data) => {
+        $("#temp").append(data);
+        $("#temp").append("<br />");
       });
-      socket.on('connect', function () {
-        console.log('client fire:[connect]');
-        console.log('socket.id: ' + socket.id);
-      });
-
-      socket.on('disconnect', function (data) {
-        console.log('client fire:[disconnect]');
-      });
-
-      socket.on('reconnect', function () {
-        console.log('client fire:[reconnect]');
-        if (USERNAME) {
-          socket.emit('join', username);
-        }
-      });
-
-      socket.on('message', function (data) {
-        console.log('client fire:[message]-' + data.message);
-        $("#content").append(contentFormat(data));
-      });
-
-      socket.on('join', (data) => {
-        console.log('client fire:[join]');
-        data.username = '';
-        $("#content").append(contentFormat(data));
-      })
-
-      socket.on('leave', (data) => {
-        console.log('client fire:[leave]');
-        data.username = '';
-        $("#content").append(contentFormat(data));
-      })
-
-      socket.on('broadcast', (data) => {
-        console.log('client fire:[broadcast]');
-        $("#content").append(contentFormat(data));
-      })
-
-      function contentFormat(data) {
-        var username = data.username ? data.username + ' : ' : '';
-        return '<div class="contentline">' +
-          '  <span class="msgTime">' + data.time + '</span>' +
-          '  <span class="msgUsername">' + username + '</span>' +
-          '  <span class="msgContent">' + data.message + '</span>' +
-          '</div>';
-      }
 
       $("#btnSend").click(() => {
         
         var message = $("#message").val();
-        
-        // ====服务器端使用 io.in(room) 方法实现====
-        // var data = {
-        //   username: USERNAME,
-        //   message: message,
-        //   time: DateFormat.format(new Date(), 'MM-dd hh:mm:ss')
-        // };
-        // $("#content").append(contentFormat(data));
 
         socket.emit('message', message);
 
@@ -147,6 +101,7 @@
         var roomid = ROOMID = $("#rooms").val();
         console.log(roomid);
         $("#message").prev().html(username + ' : ');
+        
         socket.emit('join', {
           username: username,
           roomid: roomid

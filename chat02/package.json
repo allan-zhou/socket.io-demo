@@ -1,5 +1,5 @@
 {
-  "name": "chat",
+  "name": "chat02",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,9 +9,13 @@
   "author": "zhoujl",
   "license": "ISC",
   "dependencies": {
+    "connect-redis": "^3.3.2",
     "dateformat": "^3.0.2",
     "express": "^4.16.2",
+    "express-session": "^1.15.6",
     "log4js": "^2.3.5",
-    "socket.io": "^2.0.3"
+    "redis": "^2.8.0",
+    "socket.io": "^2.0.3",
+    "socket.io-redis": "^5.2.0"
   }
 }
